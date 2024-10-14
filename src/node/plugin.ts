@@ -87,7 +87,7 @@ export async function createVitePressPlugin(
 
   if (markdown?.math) {
     isCustomElement = (tag) => {
-      if (['mjx-container', 'mjx-assistive-mml'].includes(tag)) {
+      if (tag.startsWith('mjx-')) {
         return true
       }
       return userCustomElementChecker?.(tag) ?? false
@@ -384,6 +384,7 @@ export async function createVitePressPlugin(
         try {
           await resolveUserConfig(siteConfig.root, 'serve', 'development')
         } catch (err: any) {
+          siteConfig.logger.error(err)
           return
         }
 
@@ -401,8 +402,9 @@ export async function createVitePressPlugin(
           config.publicDir
         )
 
+        const relativePath = slash(path.relative(srcDir, file))
         const payload: PageDataPayload = {
-          path: `/${slash(path.relative(srcDir, file))}`,
+          path: `/${siteConfig.rewrites.map[relativePath] || relativePath}`,
           pageData
         }
 

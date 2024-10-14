@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 import path from 'path'
-import glob from 'fast-glob'
+import { glob, type GlobOptions } from 'tinyglobby'
 import type { SiteConfig } from './config'
 import matter from 'gray-matter'
 import { normalizePath } from 'vite'
@@ -54,11 +54,11 @@ export interface ContentOptions<T = ContentData[]> {
   transform?: (data: ContentData[]) => T | Promise<T>
 
   /**
-   * Options to pass to `fast-glob`.
+   * Options to pass to `tinyglobby`.
    * You'll need to manually specify `node_modules` and `dist` in
    * `globOptions.ignore` if you've overridden it.
    */
-  globOptions?: glob.Options
+  globOptions?: GlobOptions
 }
 
 export interface ContentData {
@@ -75,7 +75,7 @@ export interface ContentData {
  */
 export function createContentLoader<T = ContentData[]>(
   /**
-   * files to glob / watch - relative to <project root>
+   * files to glob / watch - relative to srcDir
    */
   pattern: string | string[],
   {
@@ -98,7 +98,7 @@ export function createContentLoader<T = ContentData[]>(
   }
 
   if (typeof pattern === 'string') pattern = [pattern]
-  pattern = pattern.map((p) => normalizePath(path.join(config.root, p)))
+  pattern = pattern.map((p) => normalizePath(path.join(config.srcDir, p)))
 
   let md: MarkdownRenderer
 
@@ -118,6 +118,7 @@ export function createContentLoader<T = ContentData[]>(
         files = (
           await glob(pattern, {
             ignore: ['**/node_modules/**', '**/dist/**'],
+            expandDirectories: false,
             ...globOptions
           })
         ).sort()

@@ -30,25 +30,25 @@ export interface ScaffoldOptions {
 
 const getPackageManger = () => {
   const name = process.env?.npm_config_user_agent || 'npm'
-  if (name === 'npm') {
-    return 'npm'
-  }
   return name.split('/')[0]
 }
 
-export async function init() {
+export async function init(root: string | undefined) {
   intro(bold(cyan('Welcome to VitePress!')))
 
   const options: ScaffoldOptions = await group(
     {
-      root: () =>
-        text({
+      root: async () => {
+        if (root) return root
+
+        return text({
           message: 'Where should VitePress initialize the config?',
           initialValue: './',
           validate(value) {
             // TODO make sure directory is inside
           }
-        }),
+        })
+      },
 
       title: () =>
         text({
@@ -211,9 +211,9 @@ export function scaffold({
       `${getPackageManger()} run docs:dev`
     )} and start writing.${tip}`
   } else {
-    const execCommand = getPackageManger() === 'bun' ? 'bunx' : 'npx'
+    const pm = getPackageManger()
     return `You're all set! Now run ${cyan(
-      `${execCommand} vitepress dev${dir}`
+      `${pm === 'npm' ? 'npx' : pm} vitepress dev${dir}`
     )} and start writing.${tip}`
   }
 }

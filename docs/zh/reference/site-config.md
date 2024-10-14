@@ -31,16 +31,16 @@ export default {
 ```ts
 import { defineConfig } from 'vitepress'
 
-export default async () => defineConfig({
+export default async () => {
   const posts = await (await fetch('https://my-cms.com/blog-posts')).json()
 
-  return {
+  return defineConfig({
     // 应用级配置选项
     lang: 'en-US',
     title: 'VitePress',
     description: 'Vite & Vue powered static site generator.',
 
-    // 主题级别配置选项
+    // 主题级配置选项
     themeConfig: {
       sidebar: [
         ...posts.map((post) => ({
@@ -49,8 +49,8 @@ export default async () => defineConfig({
         }))
       ]
     }
-  }
-})
+  })
+}
 ```
 
 也可以在最外层使用 `await`。例如：
@@ -333,7 +333,7 @@ export default {
 - 类型：`string`
 - 默认值： `/`
 
-站点将部署到的 base URL。如果计划在子路径例如 GitHub 页面）下部署站点，则需要设置此项。如果计划将站点部署到 `https://foo.github.io/bar/`，那么应该将 `base` 设置为 `“/bar/”`。它应该始终以 `/` 开头和结尾。
+站点将部署到的 base URL。如果计划在子路径例如 GitHub 页面下部署站点，则需要设置此项。如果计划将站点部署到 `https://foo.github.io/bar/`，那么应该将 `base` 设置为 `'/bar/'`。它应该始终以 `/` 开头和结尾。
 
 base 会自动添加到其他选项中以 `/` 开头的所有 URL 前面，因此只需指定一次。
 
@@ -377,7 +377,7 @@ export default {
 - 类型：`string`
 - 默认值： `.`
 
-markdown 页面的目录，相对于项目根目录。另请参阅[根目录和源目录](../guide/routing#root-and-source-directory)。
+相对于项目根目录的 markdown 文件所在的文件夹。另请参阅[根目录和源目录](../guide/routing#root-and-source-directory)。
 
 ```ts
 export default {
@@ -390,7 +390,7 @@ export default {
 - 类型：`string`
 - 默认值： `undefined`
 
-用于匹配应作为源内容输出的 markdown 文件的 [全局模式](https://github.com/mrmlnc/fast-glob#pattern-syntax)。
+用于匹配应排除作为源内容输出的 markdown 文件，语法详见 [glob pattern](https://github.com/mrmlnc/fast-glob#pattern-syntax)。
 
 ```ts
 export default {
@@ -471,6 +471,13 @@ export default {
 }
 ```
 
+### metaChunk <Badge type="warning" text="experimental" />
+
+- 类型：`boolean`
+- 默认值：`false`
+
+当设置为 `true` 时，将页面元数据提取到单独的 JavaScript 块中，而不是内联在初始 HTML 中。这使每个页面的 HTML 负载更小，并使页面元数据可缓存，从而当站点中有很多页面时可以减少服务器带宽。
+
 ### mpa <Badge type="warning" text="experimental" />
 
 - 类型：`boolean`
@@ -480,7 +487,7 @@ export default {
 
 ## 主题 {#theming}
 
-### appearance 
+### appearance
 
 - 类型：`boolean | 'dark' | 'force-dark' | import('@vueuse/core').UseDarkOptions`
 - 默认值： `true`
@@ -510,7 +517,7 @@ export default {
 
 - 类型：`MarkdownOption`
 
-配置 Markdown 解析器选项。VitePress 使用 [Markdown-it](https://github.com/markdown-it/markdown-it) 作为解析器，使用 [Shikiji](https://github.com/antfu/shikiji) ([Shiki](https://shiki.matsu.io/) 的改进版本) 来高亮不同语言语法。在此选项中，可以传递各种 Markdown 相关选项以满足你的需要。
+配置 Markdown 解析器选项。VitePress 使用 [Markdown-it](https://github.com/markdown-it/markdown-it) 作为解析器，使用 [Shiki](https://github.com/shikijs/shiki) 来高亮不同语言语法。在此选项中，可以传递各种 Markdown 相关选项以满足你的需要。
 
 ```js
 export default {
@@ -552,8 +559,8 @@ export default {
 
 VitePress 构建钩子允许向站点添加新功能和行为：
 
-- Sitemap 
-- Search Indexing 
+- Sitemap
+- Search Indexing
 - PWA
 - Teleport
 
@@ -645,13 +652,31 @@ export default {
 }
 ```
 
+#### 示例：添加 canonical URL `<link>` {#example-adding-a-canonical-url-link}
+
+```ts
+export default {
+  transformPageData(pageData) {
+    const canonicalUrl = `https://example.com/${pageData.relativePath}`
+      .replace(/index\.md$/, '')
+      .replace(/\.md$/, '.html')
+
+    pageData.frontmatter.head ??= []
+    pageData.frontmatter.head.push([
+      'link',
+      { rel: 'canonical', href: canonicalUrl }
+    ])
+  }
+}
+```
+
 ### transformHtml
 
 - 类型：`(code: string, id: string, context: TransformContext) => Awaitable<string | void>`
 
 `transformHtml` 是一个构建钩子，用于在保存到磁盘之前转换每个页面的内容。
 
-::: warning 
+::: warning
 不要改变 `context` 中的任何东西。另外，修改 html 内容可能会导致运行时出现激活问题。
 :::
 
